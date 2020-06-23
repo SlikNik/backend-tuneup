@@ -5,20 +5,42 @@
 Use the timeit and cProfile libraries to find bad code.
 """
 
-__author__ = "???"
+__author__ = "Nikal Morgan"
 
+import timeit
 import cProfile
 import pstats
 import functools
+from collections import Counter
 
 
 def profile(func):
     """A cProfile decorator function that can be used to
     measure performance.
     """
-    # Be sure to review the lesson material on decorators.
-    # You need to understand how they are constructed and used.
-    raise NotImplementedError("Complete this decorator function")
+    # a decorator that wraps the func....
+    @functools.wraps(func)
+    def performance(*args, **kwargs):
+        # create cProfile Profile
+        performance_object = cProfile.Profile()
+        # turning on profile
+        performance_object.enable()
+        # running function and setting it to result
+        result = func(*args, **kwargs)
+        # turning off profile
+        performance_object.disable()
+
+        # creating pstats obj for the performance object
+        get_stats_obj = pstats.Stats(performance_object)
+        get_stats_obj.strip_dirs().sort_stats('cumulative').print_stats()
+        # removing the extraneous path from all the module names
+        # get_stats_obj.strip_dirs()
+        # sorts stat object according to criteria which here is cumulative
+        # get_stats_obj.sort_stats('cumulative')
+        # printing out all the statistics
+        # get_stats_obj.print_stats()
+        return result
+    return performance
 
 
 def read_movies(src):
@@ -28,29 +50,48 @@ def read_movies(src):
         return f.read().splitlines()
 
 
-def is_duplicate(title, movies):
-    """Returns True if title is within movies list."""
-    for movie in movies:
-        if movie.lower() == title.lower():
-            return True
-    return False
+# this function add more time to overall performance time wasn't needed
+# def is_duplicate(title, movies):
+#     """Returns True if title is within movies list."""
+#     for movie in movies:
+#         if movie.lower() == title.lower():
+#             return True
+#     return False
 
 
+@profile
 def find_duplicate_movies(src):
     """Returns a list of duplicate movies from a src list."""
     movies = read_movies(src)
-    duplicates = []
-    while movies:
-        movie = movies.pop()
-        if is_duplicate(movie, movies):
-            duplicates.append(movie)
-    return duplicates
+    # fastest way
+    # Counter: collection where elements are stored as dict keys
+    # and their counts are stored as dict values
+    movie_dict = Counter(movies)
+
+    # second fastest
+    # used count() method to get the count of each movie and set it as value
+    # movie_dict = {movie: movies.count(movie) for movie in movies}
+
+    # slowest
+    # movie_dict = {}
+    # for movie in movies:
+    #     if movie in movie_dict:
+    #         # if it's already there we need to increment it
+    #         movie_dict[movie] += 1
+    #     # if the movie is not already there we need to add it
+    #     movie_dict.setdefault(movie, 1)
+    return [k for k, v in movie_dict.items() if v > 1]
 
 
 def timeit_helper():
     """Part A: Obtain some profiling measurements using timeit."""
-    # YOUR CODE GOES HERE
-    pass
+    # Timer gets the avg of it
+    # stmt is the code for which you want to measure the execution time
+    # setup is the details that need to be executed before stmt
+    t = timeit.Timer(stmt="main()", setup="from __main__ import main")
+    results = min(t.repeat(repeat=7, number=5)) / 5
+    print("Best time across 7 repeats of 5 runs per repeat " + str(results)
+          + " sec")
 
 
 def main():
