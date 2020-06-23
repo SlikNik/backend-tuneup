@@ -11,6 +11,7 @@ import timeit
 import cProfile
 import pstats
 import functools
+from collections import Counter
 
 
 def profile(func):
@@ -61,14 +62,24 @@ def read_movies(src):
 @profile
 def find_duplicate_movies(src):
     """Returns a list of duplicate movies from a src list."""
-    movie_dict = {}
     movies = read_movies(src)
-    for movie in movies:
-        if movie in movie_dict:
-            # if it's already there we need to increment it
-            movie_dict[movie] += 1
-        # if the movie is not already there we need to add it
-        movie_dict.setdefault(movie, 1)
+    # fastest way
+    # Counter: collection where elements are stored as dict keys
+    # and their counts are stored as dict values
+    movie_dict = Counter(movies)
+
+    # second fastest
+    # used count() method to get the count of each movie and set it as value
+    # movie_dict = {movie: movies.count(movie) for movie in movies}
+
+    # slowest
+    # movie_dict = {}
+    # for movie in movies:
+    #     if movie in movie_dict:
+    #         # if it's already there we need to increment it
+    #         movie_dict[movie] += 1
+    #     # if the movie is not already there we need to add it
+    #     movie_dict.setdefault(movie, 1)
     return [k for k, v in movie_dict.items() if v > 1]
 
 
